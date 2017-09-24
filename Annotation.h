@@ -6,7 +6,7 @@
 //  Copyright © 2017年 xindong. All rights reserved.
 //
 
- <CoreGraphics>: CGImage
+******************************* <CoreGraphics>: CGImageRef **************************************
 
 ## 1. CGImageCreate()
  /**
@@ -160,16 +160,15 @@ CFTypeID CGImageGetTypeID(void);
      kCGImageAlphaFirst              -> alpha组件存储在每个像素最重要的部分.
      kCGImageAlphaLast               -> alpha组件存储在每个像素中最不重要的部分.
      kCGImageAlphaNone               -> 没有透明通道.
-     kCGImageAlphaNoneSkipFirst      -> 没有alpha通道, 如果像素的总尺寸大于色空间中颜色组件数量所要求的空间, 那么最重要的位就被忽略了.
+     kCGImageAlphaNoneSkipFirst      -> 有alpha分量，但是忽略该值，相当于没有透明通道. 如果像素的总尺寸大于色空间中颜色组件数量所要求的空间, 那么最高有效位就被忽略了.
      kCGImageAlphaOnly               -> 没有颜色数据, 只有透明通道.
-     kCGImageAlphaNoneSkipLast       -> 没有透明通道.
-     kCGImageAlphaPremultipliedFirst —> alpha组件存储在每个像素中最重要的部分, 并且各颜色组件已经和alpha值进行相乘.
-     kCGImageAlphaPremultipliedLast  -> alpha组件存储在每个像素中最不重要的部分, 并且各颜色组件已经和alpha值进行相乘.
+     kCGImageAlphaNoneSkipLast       -> 有alpha分量，但是忽略该值，相当于没有透明通道.
+     kCGImageAlphaPremultipliedFirst —> alpha组件存储在每个像素的最高有效位, 并且各颜色组件已经和alpha值进行相乘.
+     kCGImageAlphaPremultipliedLast  -> alpha组件存储在每个像素的最低有效位, 并且各颜色组件已经和alpha值进行相乘.
  */
 CGImageAlphaInfo CGImageGetAlphaInfo(CGImageRef image);
 
 ## 12. CGImageGetBitmapInfo()
-
 /**
  获取一张位图的位图信息.
 
@@ -182,10 +181,63 @@ CGBitmapInfo CGImageGetBitmapInfo(CGImageRef image);
 
 
 
+******************************* <CoreGraphics>: CGDataProviderRef *************************************
+/*数据提供者, 用来读取数据, 并消除了管理原始内存缓冲区的需要.*/
+
+## 1. CGDataProviderCreate()
+
+/**
+ 创建一个顺序访问的数据提供者.
+
+ @param info      任意数据类型的指针或者为NULL, 当caller指定`callBack`参数时，会将该参数回调给caller。
+ @param callbacks 一个结构体指针的回调，在回调实现中读取数据流。
+ @return 需要调用`CGDataProviderRelease`.
+ */
+CGDataProviderRef CGDataProviderCreate(void *info, const CGDataProviderCallbacks *callbacks);
+
+/// @param callbacks
+struct CGDataProviderCallbacks {
+    CGDataProviderGetBytesCallback getBytes;           // 函数指针，用来从provider中拷贝数据。
+    CGDataProviderSkipBytesCallback skipBytes;         // 函数指针，提取provider提供的数据流。
+    CGDataProviderRewindCallback rewind;               // 函数指针，倒回到数据流的起点。
+    CGDataProviderReleaseInfoCallback releaseProvider; // 函数指针，释放provider。
+};
+typedef struct CGDataProviderCallbacks CGDataProviderCallbacks;
 
 
 
+## 2. CGDataProviderCreateDirectAccess()
+/**
+ 创建一个直接访问的provider.
+ 
+ @param info      可以为NULL
+ @param size      provider包含的字节数
+ @param callbacks 回调
+ @return 需要调用`CGDataProviderRelease`.
+ */
+CGDataProviderRef CGDataProviderCreateDirectAccess (void *info, size_t size, const CGDataProviderDirectAccessCallbacks *callbacks);
 
+/// @param callbacks
+struct CGDataProviderDirectAccessCallbacks {
+    CGDataProviderGetBytePointerCallback getBytePointer; // 不能为NULL
+    CGDataProviderReleaseBytePointerCallback releaseBytePointer;
+    CGDataProviderGetBytesAtOffsetCallback getBytes;     // 不能为NULL
+    CGDataProviderReleaseInfoCallback releaseProvider;
+};
+typedef struct CGDataProviderDirectAccessCallbacks  CGDataProviderDirectAccessCallbacks;
+
+
+## 3. CGDataProviderCreateWithData()
+/**
+ 通过提供的数据来创建provider。
+
+ @param info        可以为NULL
+ @param data        数据数组的指针
+ @param size        provider包含的字节数
+ @param releaseData 用来释放data
+ @return provider
+ */
+CGDataProviderRef CGDataProviderCreateWithData(void *info, const void *data, size_t size, CGDataProviderReleaseDataCallback releaseData);
 
 
 
